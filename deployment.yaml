@@ -1,0 +1,42 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: mongodb-standalone
+  namespace: alef-backend
+spec:
+  serviceName: database
+  replicas: 1
+  selector:
+    matchLabels:
+      app: database
+  template:
+    metadata:
+      labels:
+        app: database
+        selector: mongodb-standalone
+    spec:
+      containers:
+      - name: mongodb-standalone
+        image: mongo:4.0.8
+        env:
+          - name: MONGO_USERNAME
+            value: /etc/mongodb-secret/admin/MONGO_USERNAME
+          - name: MONGO_PASSWORD
+            value: /etc/mongodb-secret/admin/MONGO_PASSWORD
+        volumeMounts:
+        - name: mongodb-secret
+          mountPath: /etc/mongodb-secret
+          readOnly: true
+      nodeSelector:
+        kubernetes.io/hostname: kworker
+      volumes:
+      - name: mongodb-secret
+        secret:
+          secretName: mongodb-secret
+          items:
+          - key: MONGO_USERNAME
+            path: admin/MONGO_USERNAME
+            mode: 0444
+          - key: MONGO_PASSWORD
+            path: admin/MONGO_PASSWORD
+            mode: 0444
